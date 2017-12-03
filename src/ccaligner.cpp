@@ -52,12 +52,13 @@ int CCAligner::initAligner()
     {
         ApproxAligner(_parameters->subtitleFileName, srt).align();
     }
-
     else if(_parameters->chosenAlignerType == asrAligner)
     {
-        PocketsphinxAligner(_parameters).align();
-    }
-
+		if (!(_parameters->usingTranscript))
+			PocketsphinxAligner(_parameters).align();
+		else
+			PocketsphinxAlignerTxt(_parameters).align();
+	}
     else
     {
         FATAL(EXIT_INVALID_PARAMETERS, "Unsupported Aligner Type!");

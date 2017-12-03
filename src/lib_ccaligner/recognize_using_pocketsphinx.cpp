@@ -200,7 +200,6 @@ bool PocketsphinxAligner::initPhonemeDecoder(std::string phoneticlmPath, std::st
     }
 
     return true;
-
 }
 
 int levenshtein_distance(const std::string &firstWord, const std::string &secondWord)
@@ -545,8 +544,8 @@ bool PocketsphinxAligner::recognise()
 
 bool PocketsphinxAligner::align()
 {
-    if(_parameters->grammarType != no_grammar)
-        generateGrammar(_parameters->grammarType);
+	if (_parameters->grammarType != no_grammar)
+		generateGrammar(_parameters->grammarType);
 
     initDecoder(_parameters->modelPath, _parameters->lmPath, _parameters->dictPath, _parameters->fsgPath, _parameters->logPath);
 

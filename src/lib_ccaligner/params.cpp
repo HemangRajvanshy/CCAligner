@@ -512,6 +512,9 @@ void Params::validateParams()
     if(subtitleFileName.empty() && !usingTranscript)
         FATAL(EXIT_INVALID_PARAMETERS, "Subtitle file name is empty!");
 
+	if (usingTranscript && chosenAlignerType == approxAligner)
+		FATAL(EXIT_INVALID_PARAMETERS, "Approx alligner doesn't work with text files");
+
 	if (transcribe && usingTranscript)
 		FATAL(EXIT_INVALID_FILE, "Transcript file name is empty!");
 
