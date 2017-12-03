@@ -431,7 +431,6 @@ bool PocketsphinxAligner::recognise()
     {
         recognitionWindow = _audioWindow * 16;
     }
-
     else if(_sampleWindow)
     {
         recognitionWindow = _sampleWindow;
@@ -464,7 +463,6 @@ bool PocketsphinxAligner::recognise()
 
         if((samplesToBeRead + (2 * recognitionWindow)) < _samples.size())
             samplesToBeRead += (2 * recognitionWindow);
-
         else
             samplesToBeRead = _samples.size() - 1;
 
@@ -560,7 +558,6 @@ bool PocketsphinxAligner::align()
     {
         transcribe();
     }
-
     else
     {
         if(_parameters->useFSG)
@@ -570,7 +567,6 @@ bool PocketsphinxAligner::align()
     }
 
     return true;
-
 }
 
 bool PocketsphinxAligner::recognisePhonemes(const int16_t *sample, int readLimit, SubtitleItem *sub)

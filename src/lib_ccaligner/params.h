@@ -15,14 +15,14 @@ class Params
 {
     std::string localTime;
 public:
-    std::string audioFileName, subtitleFileName, outputFileName, modelPath, lmPath, dictPath, fsgPath, logPath, phoneticlmPath, phonemeLogPath;
+    std::string audioFileName, subtitleFileName, transcriptFileName, outputFileName, modelPath, lmPath, dictPath, fsgPath, logPath, phoneticlmPath, phonemeLogPath;
     bool audioIsRaw;
     unsigned long searchWindow, sampleWindow, audioWindow;
     alignerType chosenAlignerType;
     grammarName grammarType;
     outputFormats outputFormat;
     outputOptions printOption;
-    bool verbosity, useFSG, transcribe, useBatchMode, useExperimentalParams, searchPhonemes, displayRecognised, readStream, quickDict, quickLM;
+    bool verbosity, usingTranscript, useFSG, transcribe, useBatchMode, useExperimentalParams, searchPhonemes, displayRecognised, readStream, quickDict, quickLM;
 
     Params();
     void inputParams(int argc, char *argv[]);

@@ -21,6 +21,7 @@ Params::Params()
 {
     audioFileName = "";
     subtitleFileName = "";
+	transcriptFileName = "";
     outputFileName = "";
     modelPath = "model/";
     lmPath = "tempFiles/lm/complete.lm";
@@ -46,6 +47,7 @@ Params::Params()
     printOption = printBothWithDistinctColors;
 
     verbosity = true;
+	usingTranscript = false;
     useFSG = false;
     transcribe = false;
     useBatchMode = false;
@@ -103,7 +105,17 @@ void Params::inputParams(int argc, char *argv[])
             subtitleFileName = subParam;
             i++;
         }
+		else if (paramPrefix == "-txt")
+		{
+			if (i + 1 > argc)
+			{
+				FATAL(EXIT_INCOMPATIBLE_PARAMETERS, "-txt requires a path to valid transcript file!");
+			}
 
+			usingTranscript = true;
+			transcriptFileName = subParam;
+			i++;
+		}
         else if(paramPrefix== "-" || paramPrefix== "-stdin")
         {
             readStream = true;
@@ -498,8 +510,11 @@ void Params::validateParams()
     if(audioFileName.empty() && !readStream)
         FATAL(EXIT_INVALID_PARAMETERS, "Audio file name is empty!");
 
-    if(subtitleFileName.empty())
+    if(subtitleFileName.empty() && !usingTranscript)
         FATAL(EXIT_INVALID_PARAMETERS, "Subtitle file name is empty!");
+
+	if (transcribe && usingTranscript)
+		FATAL(EXIT_INVALID_FILE, "Transcript file name is empty!");
 
     if(modelPath.empty())
         LOG("Using default Model Path.");
@@ -576,7 +591,10 @@ void Params::validateParams()
 void Params::printParams()
 {
     std::cout<<"audioFileName       : "<<audioFileName<<"\n";
-    std::cout<<"subtitleFileName    : "<<subtitleFileName<<"\n";
+	if (!usingTranscript)
+		std::cout << "subtitleFileName    : " << subtitleFileName << "\n";
+	else
+		std::cout << "transcriptFileName	: " << transcriptFileName << "\n";
     std::cout<<"outputFileName      : "<<outputFileName<<"\n";
     std::cout<<"modelPath           : "<<modelPath<<"\n";
     std::cout<<"lmPath              : "<<lmPath<<"\n";
