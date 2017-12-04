@@ -16,7 +16,7 @@ void printUsage()
         "\nFor a complete list of available parameters and documentation, refer to the README.\n";
 }
 
-void printHeader(std::string version)
+void printHeader(const std::string& version)
 {
     std::cout<<"\n";
     std::cout<<"  ____ ____    _    _ _                       \n";
@@ -40,7 +40,7 @@ void printFooter()
     std::cout<<"https://github.com/saurabhshri/CCAligner/issues\n";
 }
 
-CCAligner::CCAligner(Params * parameters)
+CCAligner::CCAligner(Params* parameters)
 {
     _parameters = parameters;
     should_log = _parameters->verbosity ;
@@ -52,13 +52,12 @@ int CCAligner::initAligner()
     {
         ApproxAligner(_parameters->subtitleFileName, srt).align();
     }
+
     else if(_parameters->chosenAlignerType == asrAligner)
     {
-		if (!(_parameters->usingTranscript))
-			PocketsphinxAligner(_parameters).align();
-		else
-			PocketsphinxAlignerTxt(_parameters).align();
-	}
+        PocketsphinxAligner(_parameters).align();
+    }
+
     else
     {
         FATAL(EXIT_INVALID_PARAMETERS, "Unsupported Aligner Type!");
@@ -67,20 +66,14 @@ int CCAligner::initAligner()
     return 1;
 }
 
-CCAligner::~CCAligner()
-{
-
-}
-
 int main(int argc, char *argv[])
 {
     printHeader("0.03 Alpha [Shubham]");
 
     Params parameters;
-    parameters.inputParams(argc,argv);
+    parameters.inputParams(argc, argv);
 
-    CCAligner ccaligner(&parameters);
-    ccaligner.initAligner();
+    CCAligner(&parameters).initAligner();
 
     printFooter();
 

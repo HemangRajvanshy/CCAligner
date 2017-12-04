@@ -6,57 +6,45 @@
 
 #include "params.h"
 
-const std::string currentTime()
-{
-    time_t now = time(0);
-    struct tm tstruct = * localtime(&now);
-    char localTime[32]; //being generous
-    strftime(localTime, sizeof(localTime), "%d-%m-%Y-%H-%M-%S", &tstruct);
-    return std::string(localTime);
+// Default paths.
+namespace {
+    constexpr auto defaultModelPath = "model/";
+    constexpr auto defaultLmPath = "tempFiles/lm/complete.lm";
+    constexpr auto defaultDictPath = "tempFiles/dict/complete.dict";
+    constexpr auto defaultFsgPath = "tempFiles/fsg/";
+    constexpr auto defaultPhoneticLmPath = "model/en-us-phone.lm.bin";
 }
 
-
-Params::Params()
+Params::Params() noexcept
+    : localTime(32, '\0'),
+      modelPath(defaultModelPath),
+      lmPath(defaultLmPath),
+      dictPath(defaultDictPath),
+      fsgPath(defaultFsgPath),
+      phoneticlmPath(defaultPhoneticLmPath),
+      searchWindow(3),
+      chosenAlignerType(asrAligner),
+      grammarType(complete_grammar),
+      outputFormat(xml),
+      printOption(printBothWithDistinctColors),
+      verbosity(true),
+      useFSG(),
+      transcribe(),
+      useBatchMode(),
+      useExperimentalParams(),
+      searchPhonemes(),
+      displayRecognised(true),
+      readStream(),
+      quickDict(),
+      quickLM(),
+      audioIsRaw()
 {
-    audioFileName = "";
-    subtitleFileName = "";
-	transcriptFileName = "";
-    outputFileName = "";
-    modelPath = "model/";
-    lmPath = "tempFiles/lm/complete.lm";
-    dictPath = "tempFiles/dict/complete.dict";
-    fsgPath = "tempFiles/fsg/";
-
-    phoneticlmPath = "model/en-us-phone.lm.bin";
-
-    //using date and time for log file name
-    localTime = currentTime();
+    // Using date and time for log filename.
+    const auto now = std::time(nullptr);
+    localTime.erase(std::strftime(&localTime.front(), localTime.size(), "%d-%m-%Y-%H-%M-%S", std::localtime(&now)));
 
     logPath = "tempFiles/" + localTime + ".log";
     phonemeLogPath = "tempFiles/phoneme-" + localTime + ".log";
-
-    sampleWindow = 0;
-    audioWindow = 0;
-    searchWindow = 3;
-
-
-    chosenAlignerType = asrAligner;
-    grammarType = complete_grammar;
-    outputFormat = xml;
-    printOption = printBothWithDistinctColors;
-
-    verbosity = true;
-	usingTranscript = false;
-    useFSG = false;
-    transcribe = false;
-    useBatchMode = false;
-    useExperimentalParams = false;
-    searchPhonemes = false;
-    displayRecognised = true;
-    readStream = false;
-    quickDict = false;
-    quickLM = false;
-    audioIsRaw = false;
 }
 
 void Params::inputParams(int argc, char *argv[])
@@ -104,17 +92,7 @@ void Params::inputParams(int argc, char *argv[])
             subtitleFileName = subParam;
             i++;
         }
-		else if (paramPrefix == "-txt")
-		{
-			if (i + 1 > argc)
-			{
-				FATAL(EXIT_INCOMPATIBLE_PARAMETERS, "-txt requires a path to valid transcript file!");
-			}
 
-			usingTranscript = true;
-			transcriptFileName = subParam;
-			i++;
-		}
         else if(paramPrefix== "-" || paramPrefix== "-stdin")
         {
             readStream = true;
@@ -410,7 +388,7 @@ void Params::inputParams(int argc, char *argv[])
                 FATAL(EXIT_INCOMPLETE_PARAMETERS, "-searchWindow requires an integer value to determine the search scope!");
             }
 
-            searchWindow = std::strtoul( subParam.c_str(), NULL, 10 );
+            searchWindow = std::strtoul( subParam.c_str(), nullptr, 10 );
 
             if ( errno )
             {
@@ -427,7 +405,7 @@ void Params::inputParams(int argc, char *argv[])
                 FATAL(EXIT_INCOMPLETE_PARAMETERS, "-sampleWindow requires a valid integer value to determine the recognition scope!");
             }
 
-            sampleWindow = std::strtoul( subParam.c_str(), NULL, 10 );
+            sampleWindow = std::strtoul( subParam.c_str(), nullptr, 10 );
 
             if ( errno )
             {
@@ -444,7 +422,7 @@ void Params::inputParams(int argc, char *argv[])
                 FATAL(EXIT_INCOMPLETE_PARAMETERS, "-audioWindow requires a valid integer value in milliseconds to determine the recognition scope!");
             }
 
-            audioWindow = std::strtoul( subParam.c_str(), NULL, 10 );
+            audioWindow = std::strtoul( subParam.c_str(), nullptr, 10 );
 
             if ( errno )
             {
@@ -509,14 +487,8 @@ void Params::validateParams()
     if(audioFileName.empty() && !readStream)
         FATAL(EXIT_INVALID_PARAMETERS, "Audio file name is empty!");
 
-    if(subtitleFileName.empty() && !usingTranscript)
+    if(subtitleFileName.empty())
         FATAL(EXIT_INVALID_PARAMETERS, "Subtitle file name is empty!");
-
-	if (usingTranscript && chosenAlignerType == approxAligner)
-		FATAL(EXIT_INVALID_PARAMETERS, "Approx alligner doesn't work with text files");
-
-	if (transcribe && usingTranscript)
-		FATAL(EXIT_INVALID_FILE, "Transcript file name is empty!");
 
     if(modelPath.empty())
         LOG("Using default Model Path.");
@@ -590,13 +562,10 @@ void Params::validateParams()
     }
 }
 
-void Params::printParams()
+void Params::printParams() const noexcept
 {
     std::cout<<"audioFileName       : "<<audioFileName<<"\n";
-	if (!usingTranscript)
-		std::cout << "subtitleFileName    : " << subtitleFileName << "\n";
-	else
-		std::cout << "transcriptFileName	: " << transcriptFileName << "\n";
+    std::cout<<"subtitleFileName    : "<<subtitleFileName<<"\n";
     std::cout<<"outputFileName      : "<<outputFileName<<"\n";
     std::cout<<"modelPath           : "<<modelPath<<"\n";
     std::cout<<"lmPath              : "<<lmPath<<"\n";
@@ -630,10 +599,5 @@ void Params::printParams()
     std::cout<<"quickLM             : " <<quickLM<<"\n";
 
     std::cout<<"\n\n=====================================================\n\n";
-
-}
-
-Params::~Params()
-{
 
 }
