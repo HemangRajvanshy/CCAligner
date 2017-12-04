@@ -9,7 +9,6 @@
 
 #include "params.h"
 #include "recognize_using_pocketsphinx.h"
-#include "recognize_using_pocketsphinx_txt.h"
 
 class CCAligner
 {
