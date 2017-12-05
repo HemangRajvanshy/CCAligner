@@ -17,7 +17,7 @@ static int systemGetStatus(const char* command) {
 #endif
 }
 
-void PerformChecks(grammarName name, bool generateQuickLM)
+void CreateBiasedLM(grammarName name, bool generateQuickLM)
 {
 	int rv;
 	if (name == lm || name == complete_grammar)
@@ -54,78 +54,63 @@ void PerformChecks(grammarName name, bool generateQuickLM)
 	}
 }
 
-void GenerateQuickDict()
+void GenerateDict(bool generateQuickDict)
 {
-	std::ifstream vocabInput("tempFiles/vocab/complete.vocab");
-	std::ofstream dictDump;
 
-	try
+	if (generateQuickDict)
 	{
-		dictDump.open("tempFiles/dict/complete.dict", std::ios::binary);
-	}
-	catch (std::system_error& e)
-	{
-		FATAL(EXIT_FAILURE, e.code().message().c_str());
-	}
+		std::ifstream vocabInput("tempFiles/vocab/complete.vocab");
+		std::ofstream dictDump;
 
-	std::string word;
-	std::vector<std::string> phonemes;
-	bool beginWriting = false;
-
-	while (std::getline(vocabInput, word))
-	{
-		if (beginWriting)
+		try
 		{
-			phonemes = stringToPhoneme(word);
-
-			dictDump << word << " ";
-
-			for (std::string ph : phonemes)
-				dictDump << ph << " ";
-			dictDump << "\n";
+			dictDump.open("tempFiles/dict/complete.dict", std::ios::binary);
+		}
+		catch (std::system_error& e)
+		{
+			FATAL(EXIT_FAILURE, e.code().message().c_str());
 		}
 
-		if (word == "<s>")
-			beginWriting = true;
-	}
+		std::string word;
+		std::vector<std::string> phonemes;
+		bool beginWriting = false;
 
-	vocabInput.close();
-	dictDump.close();
+		while (std::getline(vocabInput, word))
+		{
+			if (beginWriting)
+			{
+				phonemes = stringToPhoneme(word);
+
+				dictDump << word << " ";
+
+				for (std::string ph : phonemes)
+					dictDump << ph << " ";
+				dictDump << "\n";
+			}
+
+			if (word == "<s>")
+				beginWriting = true;
+		}
+
+		vocabInput.close();
+		dictDump.close();
+	}
+	else
+	{
+		std::cout << "Creating the Dictionary, this might take a little time depending "
+			"on your TensorFlow configuration : tempFiles/dict/complete.dict\n";
+		int rv = systemGetStatus("g2p-seq2seq --decode tempFiles/vocab/complete.vocab --model g2p-seq2seq-cmudict/ > tempFiles/dict/complete.dict");
+
+		if (rv != 0)
+		{
+			FATAL(EXIT_FAILURE, "Something went wrong while creating dictionary!");
+		}
+	}
 
 }
 
-std::string getFileData(std::string _fileName)           //returns whole read file
+void CreateTempDirectories()
 {
-	std::ifstream infile(_fileName);
-	std::string allData = "";
-	std::string line;
-	while (std::getline(infile, line))
-	{
-		std::istringstream iss(line);
-		allData += line + "\n";
-	}
-	return allData;
-}
-
-bool generate(std::string transcriptFileName, grammarName name)
-{
-	std::string transcript = getFileData(transcriptFileName);
-	std::cout << transcript << "\n";
-
-	bool generateQuickDict = false, generateQuickLM = false;
-
-	if (name == quick_dict)
-	{
-		generateQuickDict = true;
-		name = complete_grammar;
-	}
-
-	else if (name == quick_lm)
-	{
-		generateQuickLM = true;
-		name = complete_grammar;
-	}
-
 	//create temporary directories in case they don't exist
 	LOG("Creating temporary directories at tempFiles/");
 
@@ -141,6 +126,41 @@ bool generate(std::string transcriptFileName, grammarName name)
 	}
 
 	LOG("Directories created successfully!");
+}
+
+std::string getFileData(std::string _fileName)           //returns whole read file
+{
+	std::ifstream infile(_fileName);
+	std::string allData = "";
+	std::string line;
+	while (std::getline(infile, line))
+	{
+		std::istringstream iss(line);
+		allData += line + "\n";
+	}
+	return allData;
+}
+
+bool generate(std::string transcriptFileName, grammarName name) //Generate Grammar from text files.
+{
+	std::string transcript = getFileData(transcriptFileName);
+
+	bool generateQuickDict = false, generateQuickLM = false;
+	int rv;
+
+	if (name == quick_dict)
+	{
+		generateQuickDict = true;
+		name = complete_grammar;
+	}
+
+	else if (name == quick_lm)
+	{
+		generateQuickLM = true;
+		name = complete_grammar;
+	}
+
+	CreateTempDirectories();
 
 	std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
@@ -252,31 +272,19 @@ bool generate(std::string transcriptFileName, grammarName name)
 
 	if (name == dict || name == complete_grammar)
 	{
-		if (generateQuickDict)
-		{
-			GenerateQuickDict();
-		}
-		else
-		{
-			std::cout << "Creating the Dictionary, this might take a little time depending "
-				"on your TensorFlow configuration : tempFiles/dict/complete.dict\n";
-			rv = systemGetStatus("g2p-seq2seq --decode tempFiles/vocab/complete.vocab --model g2p-seq2seq-cmudict/ > tempFiles/dict/complete.dict");
-
-			if (rv != 0)
-			{
-				FATAL(EXIT_FAILURE, "Something went wrong while creating dictionary!");
-			}
-		}
+		GenerateDict(generateQuickDict);
 	}
 
-	PerformChecks(name, generateQuickLM);
+	CreateBiasedLM(name, generateQuickLM);
+
 	LOG("Grammar files created!");
 	return true;
 }
 
-bool generate(std::vector <SubtitleItem*> subtitles, grammarName name)
+bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generate grammar from subtitle (.srt) files.
 {
     bool generateQuickDict = false, generateQuickLM = false;
+	int rv;
 
     if(name==quick_dict)
     {
@@ -290,22 +298,7 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name)
         name = complete_grammar;
     }
 
-    //create temporary directories in case they don't exist
-    LOG("Creating temporary directories at tempFiles/");
-
-#ifndef WIN32
-    int rv = systemGetStatus("mkdir -p tempFiles/corpus tempFiles/dict tempFiles/vocab tempFiles/fsg tempFiles/lm");
-#else
-    int rv = systemGetStatus("if not exist tempFiles\\ mkdir tempFiles\\corpus tempFiles\\dict tempFiles\\vocab tempFiles\\fsg tempFiles\\lm");
-#endif
-  
-    if (rv != 0)
-    {
-        FATAL(EXIT_FAILURE, "Unable to create directory tempFiles/ : %s", strerror(errno));
-    }
-
-
-    LOG("Directories created successfully!");
+	CreateTempDirectories();
 
     std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
@@ -463,24 +456,10 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name)
 
     if(name == dict || name == complete_grammar)
     {
-        if(generateQuickDict)
-        {
-			GenerateQuickDict();
-        }
-        else
-        {
-            std::cout<<"Creating the Dictionary, this might take a little time depending "
-                "on your TensorFlow configuration : tempFiles/dict/complete.dict\n";
-            rv = systemGetStatus("g2p-seq2seq --decode tempFiles/vocab/complete.vocab --model g2p-seq2seq-cmudict/ > tempFiles/dict/complete.dict");
-
-            if (rv != 0)
-            {
-                FATAL(EXIT_FAILURE, "Something went wrong while creating dictionary!");
-            }
-        }
+		GenerateDict(generateQuickDict);
     }
 
-	PerformChecks(name, generateQuickLM);
+	CreateBiasedLM(name, generateQuickLM);
 
 	if (name == phone_lm || name == complete_grammar)
 	{
