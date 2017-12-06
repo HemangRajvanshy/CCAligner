@@ -201,22 +201,8 @@ std::string getFileData(std::string _fileName)           //returns whole read fi
 	std::ifstream infile(_fileName);
 	std::string allData = "";
 	std::string line;
-
-	char a, b, c;
-	a = infile.get();
-	b = infile.get();
-	c = infile.get();
-	if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
-		infile.seekg(0);
-	}
-	else
-	{
-		infile.seekg(3);
-	}
-
 	while (std::getline(infile, line))
 	{
-		line.erase(remove(line.begin(), line.end(), '\r'), line.end());
 		std::istringstream iss(line);
 		allData += line + "\n";
 	}
@@ -250,6 +236,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 		{
 			FATAL(EXIT_FAILURE, e.code().message().c_str());
 		}
+
 		corpusDump << "<s> " << stringToLower(transcript) << " </s>\n";
 		corpusDump.close();
 	}
