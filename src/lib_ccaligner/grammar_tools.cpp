@@ -17,6 +17,92 @@ static int systemGetStatus(const char* command) {
 #endif
 }
 
+void InitializeGenerator(bool &generateQuickDict, bool &generateQuickLM, grammarName &name)
+{
+	if (name == quick_dict)
+	{
+		generateQuickDict = true;
+		name = complete_grammar;
+	}
+
+	else if (name == quick_lm)
+	{
+		generateQuickLM = true;
+		name = complete_grammar;
+	}
+}
+
+void CreateTempDirectories()
+{
+	//create temporary directories in case they don't exist
+	LOG("Creating temporary directories at tempFiles/");
+
+#ifndef WIN32
+	int rv = systemGetStatus("mkdir -p tempFiles/corpus tempFiles/dict tempFiles/vocab tempFiles/fsg tempFiles/lm");
+#else
+	int rv = systemGetStatus("if not exist tempFiles\\ mkdir tempFiles\\corpus tempFiles\\dict tempFiles\\vocab tempFiles\\fsg tempFiles\\lm");
+#endif
+
+	if (rv != 0)
+	{
+		FATAL(EXIT_FAILURE, "Unable to create directory tempFiles/ : %s", strerror(errno));
+	}
+
+	LOG("Directories created successfully!");
+}
+
+void InitializeDumpFiles(grammarName name, std::ofstream &corpusDump, std::ofstream &fsgDump, 
+	std::ofstream &vocabDump, std::ofstream &dictDump, std::ofstream &phoneticCorpusDump, std::ofstream &logDump)
+{
+	//setting exceptions to be thrown on failure
+	corpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	fsgDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	vocabDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	dictDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	phoneticCorpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	logDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	try
+	{
+		logDump.open("tempFiles/grammar.log", std::ios::binary);
+		logDump.close();
+	}
+	catch (std::system_error& e)
+	{
+		FATAL(EXIT_FAILURE, e.code().message().c_str());
+	}
+
+	if (name == corpus || name == complete_grammar)
+	{
+		std::cout << "Creating Corpus : tempFiles/corpus/corpus.txt\n";
+
+		try
+		{
+			corpusDump.open("tempFiles/corpus/corpus.txt", std::ios::binary);
+			corpusDump.close();
+		}
+		catch (std::system_error& e)
+		{
+			FATAL(EXIT_FAILURE, e.code().message().c_str());
+		}
+	}
+
+	if (name == phone_lm || name == complete_grammar)
+	{
+		std::cout << "Creating Phonetic Corpus : tempFiles/corpus/phoneticCorpus.txt\n";
+
+		try
+		{
+			phoneticCorpusDump.open("tempFiles/corpus/phoneticCorpus.txt", std::ios::binary);
+			phoneticCorpusDump.close();
+		}
+		catch (std::system_error& e)
+		{
+			FATAL(EXIT_FAILURE, e.code().message().c_str());
+		}
+	}
+}
+
 void CreateBiasedLM(grammarName name, bool generateQuickLM)
 {
 	int rv;
@@ -109,24 +195,6 @@ void GenerateDict(bool generateQuickDict)
 
 }
 
-void CreateTempDirectories()
-{
-	//create temporary directories in case they don't exist
-	LOG("Creating temporary directories at tempFiles/");
-
-#ifndef WIN32
-	int rv = systemGetStatus("mkdir -p tempFiles/corpus tempFiles/dict tempFiles/vocab tempFiles/fsg tempFiles/lm");
-#else
-	int rv = systemGetStatus("if not exist tempFiles\\ mkdir tempFiles\\corpus tempFiles\\dict tempFiles\\vocab tempFiles\\fsg tempFiles\\lm");
-#endif
-
-	if (rv != 0)
-	{
-		FATAL(EXIT_FAILURE, "Unable to create directory tempFiles/ : %s", strerror(errno));
-	}
-
-	LOG("Directories created successfully!");
-}
 
 std::string getFileData(std::string _fileName)           //returns whole read file
 {
@@ -141,6 +209,7 @@ std::string getFileData(std::string _fileName)           //returns whole read fi
 	return allData;
 }
 
+
 bool generate(std::string transcriptFileName, grammarName name) //Generate Grammar from text files.
 {
 	std::string transcript = getFileData(transcriptFileName);
@@ -148,72 +217,13 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 	bool generateQuickDict = false, generateQuickLM = false;
 	int rv;
 
-	if (name == quick_dict)
-	{
-		generateQuickDict = true;
-		name = complete_grammar;
-	}
-
-	else if (name == quick_lm)
-	{
-		generateQuickLM = true;
-		name = complete_grammar;
-	}
+	InitializeGenerator(generateQuickDict, generateQuickLM, name);
 
 	CreateTempDirectories();
 
 	std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
-	//setting exceptions to be thrown on failure
-	corpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	fsgDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	vocabDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	dictDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	phoneticCorpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	logDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-	try
-	{
-		logDump.open("tempFiles/grammar.log", std::ios::binary);
-		logDump.close();
-	}
-	catch (std::system_error& e)
-	{
-		FATAL(EXIT_FAILURE, e.code().message().c_str());
-	}
-
-	if (name == corpus || name == complete_grammar)
-	{
-		std::cout << "Creating Corpus : tempFiles/corpus/corpus.txt\n";
-
-		try
-		{
-			corpusDump.open("tempFiles/corpus/corpus.txt", std::ios::binary);
-			corpusDump.close();
-		}
-		catch (std::system_error& e)
-		{
-			FATAL(EXIT_FAILURE, e.code().message().c_str());
-		}
-	}
-	
-	if (name == phone_lm || name == complete_grammar)
-	{
-		std::cout << "Creating Phonetic Corpus : tempFiles/corpus/phoneticCorpus.txt\n";
-
-		try
-		{
-			phoneticCorpusDump.open("tempFiles/corpus/phoneticCorpus.txt", std::ios::binary);
-			phoneticCorpusDump.close();
-		}
-
-		catch (std::system_error& e)
-		{
-			FATAL(EXIT_FAILURE, e.code().message().c_str());
-		}
-
-	}
-
+	InitializeDumpFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
 
 	//Writing Files
 	if (name == corpus || name == complete_grammar)
@@ -286,71 +296,14 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generat
     bool generateQuickDict = false, generateQuickLM = false;
 	int rv;
 
-    if(name==quick_dict)
-    {
-        generateQuickDict = true;
-        name = complete_grammar;
-    }
-
-    else if(name==quick_lm)
-    {
-        generateQuickLM = true;
-        name = complete_grammar;
-    }
+	InitializeGenerator(generateQuickDict, generateQuickLM, name);
 
 	CreateTempDirectories();
 
     std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
-    //setting exceptions to be thrown on failure
-    corpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    fsgDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    vocabDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    dictDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    phoneticCorpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    logDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	InitializeDumpFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
 
-    try
-    {
-        logDump.open("tempFiles/grammar.log",std::ios::binary);
-        logDump.close();
-    }
-    catch(std::system_error& e)
-    {
-        FATAL(EXIT_FAILURE, e.code().message().c_str());
-    }
-
-    if(name == corpus || name == complete_grammar)
-    {
-        std::cout<<"Creating Corpus : tempFiles/corpus/corpus.txt\n";
-
-        try
-        {
-            corpusDump.open("tempFiles/corpus/corpus.txt",std::ios::binary);
-            corpusDump.close();
-        }
-        catch(std::system_error& e)
-        {
-            FATAL(EXIT_FAILURE, e.code().message().c_str());
-        }
-    }
-
-    if(name == phone_lm || name == complete_grammar)
-    {
-        std::cout<<"Creating Phonetic Corpus : tempFiles/corpus/phoneticCorpus.txt\n";
-
-        try
-        {
-            phoneticCorpusDump.open("tempFiles/corpus/phoneticCorpus.txt",std::ios::binary);
-            phoneticCorpusDump.close();
-        }
-
-        catch(std::system_error& e)
-        {
-            FATAL(EXIT_FAILURE, e.code().message().c_str());
-        }
-
-    }
 
     for(SubtitleItem *sub : subtitles)
     {
