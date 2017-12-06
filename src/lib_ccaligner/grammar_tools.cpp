@@ -17,7 +17,7 @@ static int systemGetStatus(const char* command) {
 #endif
 }
 
-void InitializeGenerator(bool &generateQuickDict, bool &generateQuickLM, grammarName &name)
+void ConfigureQuickGenerationOptions(bool &generateQuickDict, bool &generateQuickLM, grammarName &name) //Setup quick grammar generation
 {
 	if (name == quick_dict)
 	{
@@ -32,7 +32,7 @@ void InitializeGenerator(bool &generateQuickDict, bool &generateQuickLM, grammar
 	}
 }
 
-void CreateTempDirectories()
+void CreateTempDirectories() // Create temporary directories
 {
 	//create temporary directories in case they don't exist
 	LOG("Creating temporary directories at tempFiles/");
@@ -51,8 +51,8 @@ void CreateTempDirectories()
 	LOG("Directories created successfully!");
 }
 
-void InitializeDumpFiles(grammarName name, std::ofstream &corpusDump, std::ofstream &fsgDump, 
-	std::ofstream &vocabDump, std::ofstream &dictDump, std::ofstream &phoneticCorpusDump, std::ofstream &logDump)
+void CreateNewGrammarFiles(grammarName name, std::ofstream &corpusDump, std::ofstream &fsgDump,
+	std::ofstream &vocabDump, std::ofstream &dictDump, std::ofstream &phoneticCorpusDump, std::ofstream &logDump) //Create and initialize files for writing.
 {
 	//setting exceptions to be thrown on failure
 	corpusDump.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -103,7 +103,7 @@ void InitializeDumpFiles(grammarName name, std::ofstream &corpusDump, std::ofstr
 	}
 }
 
-void CreateBiasedLM(grammarName name, bool generateQuickLM)
+void CreateBiasedLM(grammarName name, bool generateQuickLM) //Create biased language model
 {
 	int rv;
 	if (name == lm || name == complete_grammar)
@@ -140,7 +140,7 @@ void CreateBiasedLM(grammarName name, bool generateQuickLM)
 	}
 }
 
-void GenerateDict(bool generateQuickDict)
+void GenerateDict(bool generateQuickDict) // Generate dictionary from tensor flow (or not if making quick dict)
 {
 
 	if (generateQuickDict)
@@ -196,7 +196,7 @@ void GenerateDict(bool generateQuickDict)
 }
 
 
-std::string getFileData(std::string _fileName)           //returns whole read file
+std::string getFileData(std::string _fileName)           //returns whole read file. Used to read text files
 {
 	std::ifstream infile(_fileName);
 	std::string allData = "";
@@ -217,13 +217,13 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 	bool generateQuickDict = false, generateQuickLM = false;
 	int rv;
 
-	InitializeGenerator(generateQuickDict, generateQuickLM, name);
+	ConfigureQuickGenerationOptions(generateQuickDict, generateQuickLM, name);
 
 	CreateTempDirectories();
 
 	std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
-	InitializeDumpFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
+	CreateNewGrammarFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
 
 	//Writing Files
 	if (name == corpus || name == complete_grammar)
@@ -296,13 +296,13 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generat
     bool generateQuickDict = false, generateQuickLM = false;
 	int rv;
 
-	InitializeGenerator(generateQuickDict, generateQuickLM, name);
+	ConfigureQuickGenerationOptions(generateQuickDict, generateQuickLM, name);
 
 	CreateTempDirectories();
 
     std::ofstream corpusDump, phoneticCorpusDump, fsgDump, vocabDump, dictDump, logDump;
 
-	InitializeDumpFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
+	CreateNewGrammarFiles(name, corpusDump, fsgDump, vocabDump, dictDump, phoneticCorpusDump, logDump);
 
 
     for(SubtitleItem *sub : subtitles)
