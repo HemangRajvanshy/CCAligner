@@ -215,6 +215,7 @@ std::string getFileData(std::string _fileName)           //returns whole read fi
 
     while (std::getline(infile, line))
     {
+		line.erase(remove(line.begin(), line.end(), '\r'), line.end());
         std::istringstream iss(line);
         allData += line + "\n";
     }
