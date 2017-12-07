@@ -200,6 +200,19 @@ std::string getFileData(std::string _fileName)           //returns whole read fi
     std::ifstream infile(_fileName);
     std::string allData = "";
     std::string line;
+
+	char a, b, c;
+	a = infile.get();
+	b = infile.get();
+	c = infile.get();
+	if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
+		infile.seekg(0);
+	}
+	else
+	{
+		infile.seekg(3);
+	}
+
     while (std::getline(infile, line))
     {
         std::istringstream iss(line);
