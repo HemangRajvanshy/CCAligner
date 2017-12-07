@@ -254,7 +254,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 		corpusDump.close();
 	}
 
-	/*if (name == phone_lm || name == complete_grammar)
+	if (name == phone_lm || name == complete_grammar)
 	{
 		try
 		{
@@ -265,13 +265,17 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 		{
 			FATAL(EXIT_FAILURE, e.code().message().c_str());
 		}
+		
+		std::istringstream iss(transcript);
+		std::vector<std::string> SplitTranscript((std::istream_iterator<std::string>(iss)),
+			std::istream_iterator<std::string>()); //split transcript into words
 
-		int numberOfWords = transcript.length();
+		int numberOfWords = SplitTranscript.size();
 		std::string printPhoneticCourpus = "SIL ";
 
 		for (int i = 0; i<numberOfWords; i++)
 		{
-			std::vector<Phoneme> phones = stringToPhoneme(stringToLower(sub->getWordByIndex(i)));
+			std::vector<Phoneme> phones = stringToPhoneme(stringToLower(SplitTranscript[i]));
 
 			for (Phoneme ph : phones)
 				printPhoneticCourpus += ph + " ";
@@ -281,7 +285,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 
 		phoneticCorpusDump << printPhoneticCourpus;
 		phoneticCorpusDump.close();
-	}*/ //Without phonetic transcription
+	} //Without phonetic transcription
 
 	//FSG not needed for transcription
 
