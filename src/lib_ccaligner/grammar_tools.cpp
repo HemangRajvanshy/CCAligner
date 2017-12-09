@@ -255,7 +255,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 		std::vector<std::string> SplitTranscript((std::istream_iterator<std::string>(iss)),
 			std::istream_iterator<std::string>()); //split transcript into words
 
-		int numberOfWords = SplitTranscript.size();
+		size_t numberOfWords = SplitTranscript.size();
 		std::string printPhoneticCourpus = "SIL ";
 
 		for (int i = 0; i<numberOfWords; i++)
