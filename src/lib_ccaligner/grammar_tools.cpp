@@ -232,7 +232,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
         }
         catch (std::system_error& e)
         {
-            FATAL(UnknownError) << e.code().message();
+            FATAL(FileNotFound) << e.code().message();
         }
 
         corpusDump << "<s> " << stringToLower(transcript) << " </s>\n";
@@ -248,7 +248,7 @@ bool generate(std::string transcriptFileName, grammarName name) //Generate Gramm
 
 		catch (std::system_error& e)
 		{
-			FATAL(UnknownError) << e.code().message();
+			FATAL(FileNotFound) << e.code().message();
 		}
 
 		std::istringstream iss(transcript);
@@ -316,7 +316,7 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generat
             }
             catch(std::system_error& e)
             {
-                FATAL(UnknownError) << e.code().message();
+                FATAL(FileNotFound) << e.code().message();
             }
 
             corpusDump << "<s> " << stringToLower(sub->getDialogue()) << " </s>\n";
@@ -332,7 +332,7 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generat
 
             catch(std::system_error& e)
             {
-                FATAL(UnknownError) << e.code().message();
+                FATAL(FileNotFound) << e.code().message();
             }
 
             int numberOfWords = sub->getWordCount();
@@ -365,7 +365,7 @@ bool generate(std::vector <SubtitleItem*> subtitles, grammarName name) //Generat
 
             catch(std::system_error& e)
             {
-                FATAL(UnknownError) << e.code().message();
+                FATAL(FileNotFound) << e.code().message();
             }
 
             int numberOfWords = sub->getWordCount();
